@@ -34,15 +34,34 @@ RIGHT = 'right'
 def main():
     global DISPLAY, CLOCK
 
-    pygame.init();
-    DISPLAY = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT));
+    pygame.init()
+    DISPLAY = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     CLOCK = pygame.time.Clock()
     pygame.display.set_caption('Snake')
 
     while True:
         run_game()
 
+def snake_collided():
+    # check for colliding with end of map
+    if snake[0]['x'] in [-1, GAME_WIDTH] or snake[0]['y'] in [-1, GAME_HEIGHT]:
+        return True
+    # check for collisions with itself
+    for part in snake[1:]:
+        if part['x'] == snake[0]['x'] and part['y'] == snake[0]['y']:
+            print("game over")
+            return True
+    return False
+
+def draw_snake():    
+    for part in snake:
+        x = part['x'] * CELL_SIZE
+        y = part['y'] * CELL_SIZE
+        pygame.draw.rect(DISPLAY, GREEN, (x, y, CELL_SIZE, CELL_SIZE))
+
 def run_game():
+    global snake
+
     # get starting location
     start_x = randint(3, GAME_WIDTH - 4)
     start_y = randint(3, GAME_HEIGHT - 4)
@@ -52,6 +71,11 @@ def run_game():
     # starting direction
     dir = RIGHT
     new_dir = RIGHT
+
+    # get random location for food
+    start_x = randint(0, GAME_WIDTH - 1)
+    start_y = randint(0, GAME_HEIGHT - 1)
+    food = {'x': start_x, 'y': start_y}
 
     # MAIN GAME LOOP
     while True:
@@ -76,18 +100,15 @@ def run_game():
                     sys.exit()
         dir = new_dir
 
-        # check for colliding with end of map
-        if snake[0]['x'] in [-1, GAME_WIDTH] or snake[0]['y'] in [-1, GAME_HEIGHT]:
+        if (snake_collided()):
             print("game over")
             return
-        # check for collisions with itself
-        for part in snake[1:]:
-            if part['x'] == snake[0]['x'] and part['y'] == snake[0]['y']:
-                print("game over")
-                return
 
-        # delete tail if no food eaten
-        if True:
+        # if food is eaten, generate a new location
+        if snake[0]['x'] == food['x'] and snake[0]['y'] == food['y']:
+            food = {'x': randint(0, GAME_WIDTH - 1), 'y': randint(0, GAME_HEIGHT - 1)}
+        # else, remove tail
+        else:
             snake.pop()
 
         # create new head in direction
@@ -101,11 +122,8 @@ def run_game():
             snake.insert(0, {'x': snake[0]['x'] + 1, 'y': snake[0]['y']})
 
         DISPLAY.fill(BLACK)
-        # draw snake
-        for part in snake:
-            x = part['x'] * CELL_SIZE
-            y = part['y'] * CELL_SIZE
-            pygame.draw.rect(DISPLAY, GREEN, (x, y, CELL_SIZE, CELL_SIZE))
+        pygame.draw.rect(DISPLAY, RED, (food['x'] * CELL_SIZE, food['y'] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+        draw_snake()
 
         pygame.display.update()
         # limit the game speed to FPS
